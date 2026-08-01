@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EXCEL TO PDF INVOICE GENERATOR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EXCEL TO PDF INVOICE GENERATOR (SMART & MOBILE)</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,12 +16,15 @@
             --primary: #3B82F6;
             --primary-hover: #2563EB;
             --accent: #10B981;
+            --purple-accent: #8B5CF6;
+            --danger: #EF4444;
+            --danger-hover: #DC2626;
             --text-main: #F8FAFC;
             --text-muted: #94A3B8;
             --border-color: #334155;
             --radius-lg: 16px;
             --radius-md: 10px;
-            --font-family: 'Inter', sans-serif;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
 
         * {
@@ -29,13 +32,14 @@
             margin: 0;
             padding: 0;
             font-family: var(--font-family);
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             background-color: var(--bg-main);
             color: var(--text-main);
             min-height: 100vh;
-            padding: 32px 20px;
+            padding: 24px 16px;
             line-height: 1.5;
         }
 
@@ -49,9 +53,11 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 32px;
-            padding-bottom: 20px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
             border-bottom: 1px solid var(--border-color);
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
         .brand {
@@ -63,17 +69,18 @@
         .brand-icon {
             width: 48px;
             height: 48px;
-            background: linear-gradient(135deg, var(--primary), #8B5CF6);
+            background: linear-gradient(135deg, var(--primary), var(--purple-accent));
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 24px;
             box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+            flex-shrink: 0;
         }
 
         .brand-title {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 800;
             letter-spacing: -0.5px;
             background: linear-gradient(135deg, #FFFFFF, #93C5FD);
@@ -92,7 +99,7 @@
             color: var(--accent);
             padding: 6px 14px;
             border-radius: 20px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             border: 1px solid rgba(16, 185, 129, 0.3);
             display: flex;
@@ -114,15 +121,23 @@
             background-color: var(--bg-card);
             border-radius: var(--radius-lg);
             border: 1px solid var(--border-color);
-            padding: 28px;
-            margin-bottom: 28px;
+            padding: 24px;
+            margin-bottom: 20px;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .card-title {
             font-size: 18px;
             font-weight: 700;
-            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -131,16 +146,18 @@
         /* File Dropzone */
         .dropzone-container {
             display: flex;
-            gap: 20px;
+            gap: 16px;
             align-items: stretch;
+            flex-wrap: wrap;
         }
 
         .dropzone {
             flex: 1;
+            min-width: 260px;
             border: 2px dashed var(--primary);
             background-color: rgba(59, 130, 246, 0.05);
             border-radius: var(--radius-md);
-            padding: 36px 20px;
+            padding: 30px 16px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -153,8 +170,8 @@
         }
 
         .dropzone-icon {
-            font-size: 40px;
-            margin-bottom: 12px;
+            font-size: 36px;
+            margin-bottom: 10px;
         }
 
         .dropzone-text {
@@ -164,7 +181,7 @@
         }
 
         .dropzone-hint {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
             margin-top: 4px;
         }
@@ -172,16 +189,18 @@
         .or-divider {
             display: flex;
             align-items: center;
+            justify-content: center;
             color: var(--text-muted);
             font-size: 13px;
-            font-weight: 600;
+            font-weight: 700;
+            padding: 0 4px;
         }
 
         .btn-sample {
             background-color: var(--bg-hover);
             color: var(--text-main);
             border: 1px solid var(--border-color);
-            padding: 0 24px;
+            padding: 14px 20px;
             border-radius: var(--radius-md);
             font-weight: 600;
             font-size: 14px;
@@ -189,12 +208,88 @@
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+            min-height: 48px;
         }
 
         .btn-sample:hover {
             background-color: #475569;
             border-color: #64748B;
+        }
+
+        /* Smart Suggestions Banner */
+        .suggestions-card {
+            display: none;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .suggestions-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #C084FC;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .suggestions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .suggestion-item {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: #E2E8F0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Buttons */
+        .btn-danger-outline {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #F87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 40px;
+        }
+
+        .btn-danger-outline:hover {
+            background-color: var(--danger);
+            color: #FFFFFF;
+        }
+
+        .btn-delete-col {
+            background: rgba(239, 68, 68, 0.2);
+            color: #F87171;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 6px;
+            transition: all 0.15s ease;
+        }
+
+        .btn-delete-col:hover {
+            background: var(--danger);
+            color: #FFFFFF;
         }
 
         /* File Info Bar */
@@ -210,15 +305,18 @@
             font-size: 14px;
             color: var(--accent);
             font-weight: 600;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        /* Interactive Spreadsheet Table */
+        /* Mobile Friendly Interactive Spreadsheet Table */
         .table-responsive {
             overflow-x: auto;
-            max-height: 320px;
+            max-height: 420px;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
-            margin-top: 16px;
+            margin-top: 10px;
+            -webkit-overflow-scrolling: touch;
         }
 
         table {
@@ -226,6 +324,7 @@
             border-collapse: collapse;
             font-size: 13px;
             text-align: left;
+            min-width: 600px;
         }
 
         th {
@@ -237,22 +336,25 @@
             top: 0;
             border-bottom: 1px solid var(--border-color);
             white-space: nowrap;
+            z-index: 2;
         }
 
         td {
-            padding: 8px 10px;
+            padding: 6px 8px;
             border-bottom: 1px solid var(--border-color);
             background-color: var(--bg-card);
         }
 
         td input {
             width: 100%;
+            min-width: 110px;
             background: transparent;
             border: 1px solid transparent;
             color: var(--text-main);
-            padding: 6px 8px;
-            border-radius: 4px;
+            padding: 8px 10px;
+            border-radius: 6px;
             font-size: 13px;
+            transition: all 0.15s ease;
         }
 
         td input:focus {
@@ -267,9 +369,9 @@
             background: linear-gradient(135deg, var(--primary), var(--primary-hover));
             color: #FFFFFF;
             border: none;
-            padding: 18px;
+            padding: 16px;
             border-radius: var(--radius-md);
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 800;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -278,6 +380,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
+            min-height: 54px;
         }
 
         .btn-generate:hover:not(:disabled) {
@@ -299,20 +402,24 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            gap: 12px;
+            flex-wrap: wrap;
         }
 
         .btn-zip {
             background-color: var(--accent);
             color: #0F172A;
             font-weight: 700;
-            padding: 10px 20px;
+            padding: 12px 20px;
             border-radius: var(--radius-md);
             text-decoration: none;
             display: inline-flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             transition: all 0.2s ease;
+            min-height: 44px;
         }
 
         .btn-zip:hover {
@@ -322,7 +429,7 @@
 
         .pdf-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
             gap: 16px;
         }
 
@@ -330,7 +437,7 @@
             background-color: #0F172A;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
-            padding: 18px;
+            padding: 16px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -353,13 +460,17 @@
             background-color: rgba(59, 130, 246, 0.15);
             color: #60A5FA;
             border: 1px solid rgba(59, 130, 246, 0.3);
-            padding: 8px 14px;
+            padding: 10px 14px;
             border-radius: 6px;
             text-decoration: none;
             font-weight: 600;
             font-size: 13px;
             text-align: center;
             transition: all 0.2s ease;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-download-pdf:hover {
@@ -380,6 +491,43 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        /* Mobile Optimization Breakpoints */
+        @media (max-width: 768px) {
+            body {
+                padding: 16px 10px;
+            }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                margin-bottom: 18px;
+            }
+            .brand-title {
+                font-size: 18px;
+            }
+            .card {
+                padding: 18px 14px;
+                border-radius: 12px;
+            }
+            .dropzone-container {
+                flex-direction: column;
+            }
+            .dropzone {
+                padding: 24px 14px;
+            }
+            .or-divider {
+                padding: 4px 0;
+            }
+            .btn-sample {
+                width: 100%;
+            }
+            .btn-zip {
+                width: 100%;
+            }
+            .pdf-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -388,23 +536,23 @@
     <!-- Header -->
     <header>
         <div class="brand">
-            <div class="brand-icon">📑</div>
+            <div class="brand-icon">⚡</div>
             <div>
                 <h1 class="brand-title">EXCEL TO PDF INVOICE GENERATOR</h1>
-                <p class="brand-subtitle">Automated Excel-to-PDF Professional Invoice Creator By Soubhik</p>
+                <p class="brand-subtitle">Smart Auto-Mapping • Live Forex Rates • Mobile Ready</p>
             </div>
         </div>
-        <div class="badge-status">Engine Ready</div>
+        <div class="badge-status">Smart Engine Ready</div>
     </header>
 
     <!-- Step 1: Upload or Load Data -->
     <div class="card">
         <h2 class="card-title">📁 1. Select Invoice Data</h2>
-        <div class="dropzone-container">
+        <div class="dropzone-container" style="margin-top: 14px;">
             <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
                 <div class="dropzone-icon">📊</div>
-                <div class="dropzone-text">Click or Drag & Drop Excel File (.xlsx)</div>
-                <div class="dropzone-hint">Supports single or multi-invoice sheets</div>
+                <div class="dropzone-text">Tap or Drag Excel File (.xlsx)</div>
+                <div class="dropzone-hint">Auto-maps headers & fetches Forex live rates</div>
                 <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileSelect(event)">
             </div>
             <div class="or-divider">OR</div>
@@ -414,13 +562,26 @@
         </div>
         <div class="file-info-bar" id="fileInfoBar">
             <span id="fileNameText">Selected: sample_invoice_input.xlsx</span>
-            <span>✓ Ready</span>
+            <span>✓ Preprocessed</span>
         </div>
     </div>
 
-    <!-- Step 2: Interactive Spreadsheet -->
+    <!-- Smart Suggestions & AI Insights Card -->
+    <div class="card suggestions-card" id="suggestionsCard">
+        <div class="suggestions-title">
+            <span>✨ Smart Suggestions & Automated Enhancements</span>
+        </div>
+        <div class="suggestions-list" id="suggestionsList"></div>
+    </div>
+
+    <!-- Step 2: Interactive Spreadsheet Grid -->
     <div class="card" id="editorCard" style="display: none;">
-        <h2 class="card-title">✏️ 2. Review & Edit Invoice Data</h2>
+        <div class="card-header-flex">
+            <h2 class="card-title">✏️ 2. Review & Edit Invoice Data</h2>
+            <button class="btn-danger-outline" onclick="clearAllData()">
+                🗑️ Clear All Data
+            </button>
+        </div>
         <div class="table-responsive">
             <table id="dataTable">
                 <thead><tr id="tableHeader"></tr></thead>
@@ -467,28 +628,39 @@
 
     function handleFileSelect(event) {
         if (event.target.files.length > 0) {
-            uploadFile(event.target.files[0]);
+            const selectedFile = event.target.files[0];
+            event.target.value = '';
+            uploadFile(selectedFile);
         }
     }
 
     function uploadFile(file) {
+        const dropText = document.querySelector('.dropzone-text');
+        const origText = dropText.innerText;
+        dropText.innerText = "⏳ Smart Parsing & Fetching Forex Rates...";
+
         const formData = new FormData();
         formData.append('file', file);
 
         fetch('/api/upload', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
+            dropText.innerText = origText;
             if (data.error) {
-                alert('Error: ' + data.error);
+                alert('Upload Error:\n' + data.error.replace(/<br>/g, '\n'));
                 return;
             }
             currentData = data.data;
             currentColumns = data.columns;
             currentFilePath = data.filepath;
             showFileLoaded(data.filename);
+            renderSuggestions(data.suggestions);
             renderTable();
         })
-        .catch(err => alert('Upload failed: ' + err));
+        .catch(err => {
+            dropText.innerText = origText;
+            alert('Upload failed: ' + err);
+        });
     }
 
     function loadSampleData() {
@@ -503,8 +675,27 @@
             currentColumns = data.columns;
             currentFilePath = "";
             showFileLoaded("sample_invoice_input.xlsx (Sample)");
+            renderSuggestions(data.suggestions);
             renderTable();
         });
+    }
+
+    function renderSuggestions(suggestions) {
+        const card = document.getElementById('suggestionsCard');
+        const list = document.getElementById('suggestionsList');
+        list.innerHTML = '';
+
+        if (suggestions && suggestions.length > 0) {
+            suggestions.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.innerText = s;
+                list.appendChild(item);
+            });
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
     }
 
     function showFileLoaded(name) {
@@ -512,19 +703,61 @@
         document.getElementById('fileInfoBar').style.display = "flex";
     }
 
+    function clearAllData() {
+        if (confirm("Are you sure you want to clear all invoice data?")) {
+            currentData = [];
+            currentColumns = [];
+            currentFilePath = "";
+            document.getElementById('editorCard').style.display = "none";
+            document.getElementById('fileInfoBar').style.display = "none";
+            document.getElementById('suggestionsCard').style.display = "none";
+            document.getElementById('resultsCard').style.display = "none";
+        }
+    }
+
+    function deleteInvoiceColumn(colName) {
+        if (confirm(`Delete '${colName}'?`)) {
+            currentColumns = currentColumns.filter(c => c !== colName);
+            currentData.forEach(row => { delete row[colName]; });
+            renderTable();
+        }
+    }
+
+    function deleteInvoiceRow(rIdx) {
+        if (confirm(`Delete Row ${rIdx + 1}?`)) {
+            currentData.splice(rIdx, 1);
+            renderTable();
+        }
+    }
+
     function renderTable() {
-        if (!currentData || currentData.length === 0) return;
+        if (!currentData || currentData.length === 0 || !currentColumns || currentColumns.length === 0) {
+            document.getElementById('editorCard').style.display = "none";
+            return;
+        }
         
         const headerTr = document.getElementById('tableHeader');
         const bodyTbody = document.getElementById('tableBody');
         headerTr.innerHTML = '';
         bodyTbody.innerHTML = '';
 
-        currentColumns.forEach(col => {
+        const isVertical = (currentColumns[0] === 'Attribute');
+
+        currentColumns.forEach((col, cIdx) => {
             const th = document.createElement('th');
-            th.innerText = col;
+            if (isVertical && cIdx > 0) {
+                th.innerHTML = `<span>${col}</span> <button class="btn-delete-col" onclick="deleteInvoiceColumn('${col}')" title="Delete invoice">❌ Clear</button>`;
+            } else {
+                th.innerText = col;
+            }
             headerTr.appendChild(th);
         });
+
+        if (!isVertical) {
+            const thAction = document.createElement('th');
+            thAction.innerText = 'Action';
+            headerTr.appendChild(thAction);
+        }
 
         currentData.forEach((row, rIdx) => {
             const tr = document.createElement('tr');
@@ -536,6 +769,13 @@
                 td.appendChild(inp);
                 tr.appendChild(td);
             });
+
+            if (!isVertical) {
+                const tdAction = document.createElement('td');
+                tdAction.innerHTML = `<button class="btn-delete-col" onclick="deleteInvoiceRow(${rIdx})" title="Delete row">❌ Clear</button>`;
+                tr.appendChild(tdAction);
+            }
+
             bodyTbody.appendChild(tr);
         });
 
@@ -558,7 +798,7 @@
             btn.innerHTML = '<span>🚀 Generate All PDF Invoices</span>';
 
             if (!data.success) {
-                alert('Error generating invoices: ' + data.error);
+                alert('Error generating invoices:\n' + data.error);
                 return;
             }
 
@@ -593,9 +833,6 @@
         resCard.style.display = "block";
         resCard.scrollIntoView({ behavior: 'smooth' });
     }
-
-    // Auto load sample data on first visit
-    loadSampleData();
 </script>
 
 </body>

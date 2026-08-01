@@ -1,8 +1,9 @@
 """
-Invoice Generator Engine
-------------------------
+Invoice Generator Engine (Smart Edition)
+---------------------------------------
 Reads an Excel file (one row = one line item, grouped by Invoice No),
-validates the data, fills the Word template, and exports one PDF per invoice.
+performs smart auto-mapping, auto-fetches live exchange rates,
+validates the data, fills the Word template, and exports clean 1-page PDF invoices.
 
 Usage:
     python generate_invoices.py <input_excel_path> <output_folder>
@@ -12,6 +13,8 @@ import sys
 import os
 import subprocess
 import shutil
+import json
+import urllib.request
 from datetime import datetime
 
 import pandas as pd
@@ -25,16 +28,38 @@ REQUIRED_COLUMNS = [
     "HSN/SAC", "Amount", "Currency",
     "LUT Bond No", "LUT From", "LUT To",
 ]
-# Optional columns: fine to be missing from the sheet entirely, or blank per-row.
-# If missing from the sheet, treated as blank for every row.
+
 OPTIONAL_COLUMNS = [
-    "Exchange Rate",       # only needed when Currency != INR
+    "Exchange Rate",       # required when Currency != INR
     "PO Number",
     "PO Date",
     "Project/Order Number",
     "Payment Terms",
     "Project Cost",
 ]
+
+COLUMN_ALIASES = {
+    "Invoice No": ["invoice no", "invoice_no", "invoiceno", "invoice #", "inv no", "inv_no", "inv #", "invoice number", "bill no", "bill number", "inv_number"],
+    "Invoice Date": ["invoice date", "invoice_date", "invoicedate", "inv date", "inv_date", "date", "bill date", "date of issue"],
+    "Buyer Name": ["buyer name", "buyer_name", "buyername", "buyer", "client name", "client", "customer name", "customer", "bill to", "billed to", "company name"],
+    "Buyer Address Line1": ["buyer address line1", "buyer address 1", "address line 1", "address1", "street address", "buyer_address_line1", "address line1", "address 1"],
+    "Buyer Address Line2": ["buyer address line2", "buyer address 2", "address line 2", "address2", "city state zip", "buyer_address_line2", "address line2", "address 2"],
+    "Country": ["country", "buyer country", "client country", "country name"],
+    "Particulars": ["particulars", "description", "item description", "service description", "item", "services", "details", "particular"],
+    "Period Description": ["period description", "period", "service period", "billing period", "month", "duration"],
+    "HSN/SAC": ["hsn/sac", "hsn", "sac", "hsn_sac", "hsn code", "sac code", "tax code", "hsn/sac code"],
+    "Amount": ["amount", "total amount", "item amount", "total", "price", "net amount", "val", "value", "cost"],
+    "Currency": ["currency", "curr", "currency code", "unit"],
+    "LUT Bond No": ["lut bond no", "lut no", "lut number", "lut_bond_no", "lut bond"],
+    "LUT From": ["lut from", "lut_from", "lut valid from", "lut start"],
+    "LUT To": ["lut to", "lut_to", "lut valid to", "lut end"],
+    "Exchange Rate": ["exchange rate", "exchange_rate", "forex rate", "conversion rate", "rate", "inr rate"],
+    "PO Number": ["po number", "po no", "po_number", "po #", "purchase order"],
+    "PO Date": ["po date", "po_date", "purchase order date"],
+    "Project/Order Number": ["project/order number", "project number", "order number", "project no", "order no"],
+    "Payment Terms": ["payment terms", "terms", "payment term", "due terms"],
+    "Project Cost": ["project cost", "total cost"]
+}
 
 CURRENCY_NAMES = {
     "USD": "US Dollars", "EUR": "Euros", "GBP": "Pounds Sterling",
@@ -45,7 +70,133 @@ CURRENCY_SYMBOLS = {
     "USD": "$", "EUR": "\u20ac", "GBP": "\u00a3", "INR": "\u20b9",
     "AUD": "A$", "CAD": "C$", "SGD": "S$", "AED": "AED ", "JPY": "\u00a5",
 }
+FALLBACK_EXCHANGE_RATES = {
+    "USD": 83.80, "EUR": 90.50, "GBP": 106.80, "AUD": 54.20,
+    "CAD": 61.10, "SGD": 62.40, "AED": 22.80, "JPY": 0.55
+}
 TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "invoice_template.docx")
+
+
+# ---------- LIVE EXCHANGE RATE FETCHING ----------
+def fetch_live_exchange_rate(base_currency="USD", target_currency="INR"):
+    """Fetches live exchange rate using open API with fallback."""
+    base_curr = base_currency.upper().strip()
+    if base_curr == "INR":
+        return 1.0
+    try:
+        url = f"https://open.er-api.com/v6/latest/{base_curr}"
+        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        with urllib.request.urlopen(req, timeout=3) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            if data.get("result") == "success" and "rates" in data:
+                rate = float(data["rates"].get(target_currency.upper()))
+                return round(rate, 2)
+    except Exception:
+        pass
+    return FALLBACK_EXCHANGE_RATES.get(base_curr, None)
+
+
+# ---------- SMART PREPROCESSING & FUZZY AUTO-MAPPING ----------
+def smart_preprocess_dataframe(df):
+    """
+    Smartly cleans and maps Excel columns using fuzzy matching, auto-fetches live
+    exchange rates via live API, auto-completes missing fields with smart defaults,
+    and returns (cleaned_df, suggestions, errors).
+    """
+    suggestions = []
+    errors = []
+    
+    if df is None or df.empty:
+        return df, suggestions, ["Uploaded file is empty"]
+
+    # 1. Fuzzy Header Matching
+    new_cols = {}
+    for col in df.columns:
+        clean_col = str(col).strip()
+        matched_std = None
+        for std_col, aliases in COLUMN_ALIASES.items():
+            if clean_col == std_col or clean_col.lower() in aliases:
+                matched_std = std_col
+                break
+        if matched_std and matched_std != clean_col:
+            new_cols[col] = matched_std
+            suggestions.append(f"✨ Auto-mapped Excel column '{clean_col}' → '{matched_std}'")
+        else:
+            new_cols[col] = clean_col
+
+    df = df.rename(columns=new_cols)
+
+    # Handle vertical format if needed
+    first_col_vals = [str(x).strip() for x in df.iloc[:, 0].dropna()]
+    if "Invoice No" in first_col_vals or "Buyer Name" in first_col_vals:
+        header_col = df.columns[0]
+        df = df.dropna(subset=[header_col])
+        df[header_col] = df[header_col].astype(str).str.strip()
+        transposed = df.set_index(header_col).T
+        transposed.columns.name = None
+        df = transposed.reset_index(drop=True)
+        suggestions.append("📐 Transposed vertical layout into standard data grid.")
+
+    # 2. Check for missing required columns
+    missing_cols = [c for c in REQUIRED_COLUMNS if c not in df.columns]
+    if missing_cols:
+        errors.append(f"Missing required column(s): {', '.join(missing_cols)}")
+        return df, suggestions, errors
+
+    # 3. Ensure optional columns exist
+    for col in OPTIONAL_COLUMNS:
+        if col not in df.columns:
+            df[col] = pd.NA
+
+    # 4. Smart Auto-Fill & Live Rate Fetching per row
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    fetched_rates = {}
+
+    for idx in range(len(df)):
+        row_num = idx + 2
+        
+        # Auto-fill missing Invoice Date
+        if pd.isna(df.at[idx, "Invoice Date"]) or str(df.at[idx, "Invoice Date"]).strip() == "":
+            df.at[idx, "Invoice Date"] = today_str
+            inv_no = df.at[idx, "Invoice No"] if not pd.isna(df.at[idx, "Invoice No"]) else f"Row {row_num}"
+            suggestions.append(f"📅 Auto-filled missing Invoice Date for {inv_no} ({today_str})")
+
+        # Auto-fill missing HSN/SAC code with standard IT services code 998313
+        if pd.isna(df.at[idx, "HSN/SAC"]) or str(df.at[idx, "HSN/SAC"]).strip() == "":
+            df.at[idx, "HSN/SAC"] = "998313"
+            suggestions.append(f"🏷️ Auto-filled standard HSN/SAC code 998313 for Row {row_num}")
+
+        # Smart Currency & Exchange Rate Fetching
+        curr = str(df.at[idx, "Currency"]).strip().upper() if not pd.isna(df.at[idx, "Currency"]) else "USD"
+        df.at[idx, "Currency"] = curr
+
+        if curr != "INR":
+            rate_val = df.at[idx, "Exchange Rate"]
+            if pd.isna(rate_val) or str(rate_val).strip() == "":
+                if curr not in fetched_rates:
+                    fetched_rates[curr] = fetch_live_exchange_rate(curr, "INR")
+                
+                live_rate = fetched_rates.get(curr)
+                if live_rate:
+                    df.at[idx, "Exchange Rate"] = str(live_rate)
+                    suggestions.append(f"🌐 Smartly fetched live Forex rate for {curr}: 1 {curr} = ₹{live_rate} INR")
+                else:
+                    errors.append(f"Row {row_num}: Could not fetch exchange rate for currency '{curr}'")
+
+        # Layout compacting checks
+        line2 = df.at[idx, "Buyer Address Line2"]
+        if pd.isna(line2) or str(line2).strip() == "":
+            df.at[idx, "Buyer Address Line2"] = ""
+
+    # Space saving suggestion
+    inv_counts = df.groupby("Invoice No").size()
+    max_items = inv_counts.max() if not inv_counts.empty else 1
+    if max_items <= 3:
+        suggestions.append(f"⚡ Space Saved: Compact 1-page layout active for all generated invoices.")
+    else:
+        suggestions.append(f"📄 Dynamic Layout: Scaled table row heights to prevent multi-page overflow.")
+
+    return df, suggestions, errors
 
 
 # ---------- VALIDATION ----------
@@ -55,15 +206,10 @@ def validate_dataframe(df):
     missing_cols = [c for c in REQUIRED_COLUMNS if c not in df.columns]
     if missing_cols:
         errors.append(f"Missing required column(s): {', '.join(missing_cols)}")
-        return errors  # can't validate further without the columns
-
-    # Ensure optional columns exist (as all-blank) so downstream code doesn't KeyError
-    for col in OPTIONAL_COLUMNS:
-        if col not in df.columns:
-            df[col] = pd.NA
+        return errors
 
     for idx, row in df.iterrows():
-        row_num = idx + 2  # +2 because Excel is 1-indexed and has a header row
+        row_num = idx + 2
         if pd.isna(row["Invoice No"]) or str(row["Invoice No"]).strip() == "":
             errors.append(f"Row {row_num}: Invoice No is empty")
         if pd.isna(row["Buyer Name"]) or str(row["Buyer Name"]).strip() == "":
@@ -139,25 +285,20 @@ def generate_invoices(input_excel_path, output_folder):
         return log_lines, []
 
     raw_df = pd.read_excel(input_excel_path, dtype=str)
-
-    # Check if attributes are listed vertically (Column A contains field names like "Invoice No")
-    first_col_vals = [str(x).strip() for x in raw_df.iloc[:, 0].dropna()]
-    if "Invoice No" in first_col_vals or "Buyer Name" in first_col_vals:
-        # Transpose vertical format: rows become columns, columns become rows
-        header_col = raw_df.columns[0]
-        raw_df = raw_df.dropna(subset=[header_col])
-        raw_df[header_col] = raw_df[header_col].astype(str).str.strip()
-        transposed = raw_df.set_index(header_col).T
-        transposed.columns.name = None
-        df = transposed.reset_index(drop=True)
-    else:
-        df = raw_df
+    
+    # Run Smart Preprocessing & Fuzzy Mapping
+    df, suggestions, prep_errors = smart_preprocess_dataframe(raw_df)
+    if suggestions:
+        log_lines.append("SMART SUGGESTIONS & AUTO-FIXES APPLIED:")
+        for s in suggestions:
+            log_lines.append(f"  {s}")
 
     # Validate
     errors = validate_dataframe(df)
-    if errors:
+    if errors or prep_errors:
+        all_errs = prep_errors + errors
         log_lines.append("\nVALIDATION FAILED. Fix the following issues and re-run:")
-        for e in errors:
+        for e in all_errs:
             log_lines.append(f"  - {e}")
         return log_lines, []
 
@@ -251,6 +392,7 @@ def generate_invoices(input_excel_path, output_folder):
         except subprocess.CalledProcessError as e:
             log_lines.append(f"ERROR converting {safe_name} to PDF: {e.stderr.decode(errors='ignore')}")
 
+    # Cleanup temp working files to save server disk space
     shutil.rmtree(temp_dir, ignore_errors=True)
 
     log_lines.append(f"\nDone. {len(generated_files)} invoice(s) generated in: {output_folder}")

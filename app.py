@@ -1,8 +1,8 @@
 """
-Invoice Generator - Web Application
-------------------------------------
+Invoice Generator - Web Application (Smart Edition)
+--------------------------------------------------
 A user-friendly, browser-based Web UI for generating PDF invoices.
-No command-line needed for non-technical users.
+Includes Smart Auto-Mapping, Forex Live Rates, and Mobile Optimization.
 
 Run with:
     python app.py
@@ -34,32 +34,29 @@ def index():
 
 @app.route('/api/sample-data', methods=['GET'])
 def get_sample_data():
-    """Returns sample invoice data for 1-click non-tech testing."""
+    """Returns sample invoice data with smart preprocessing."""
     sample_path = os.path.join(BASE_DIR, "sample_invoice_input.xlsx")
     if not os.path.exists(sample_path):
-        return jsonify({"error": "Sample file not found"}), 44
+        return jsonify({"error": "Sample file not found"}), 404
 
     try:
         raw_df = pd.read_excel(sample_path, dtype=str)
-        first_col_vals = [str(x).strip() for x in raw_df.iloc[:, 0].dropna()]
-        if "Invoice No" in first_col_vals or "Buyer Name" in first_col_vals:
-            header_col = raw_df.columns[0]
-            raw_df = raw_df.dropna(subset=[header_col])
-            raw_df[header_col] = raw_df[header_col].astype(str).str.strip()
-            df = raw_df.set_index(header_col).T.reset_index(drop=True)
-        else:
-            df = raw_df
-
-        data = df.fillna("").to_dict(orient="records")
-        columns = list(df.columns)
-        return jsonify({"columns": columns, "data": data, "filename": "sample_invoice_input.xlsx"})
+        cleaned_df, suggestions, errors = generate_invoices.smart_preprocess_dataframe(raw_df)
+        data = cleaned_df.fillna("").to_dict(orient="records")
+        columns = list(cleaned_df.columns)
+        return jsonify({
+            "columns": columns,
+            "data": data,
+            "filename": "sample_invoice_input.xlsx",
+            "suggestions": suggestions
+        })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/upload', methods=['POST'])
 def upload_file():
-    """Uploads and parses an Excel spreadsheet."""
+    """Uploads and parses an Excel spreadsheet with smart preprocessing."""
     if 'file' not in request.files:
         return jsonify({"error": "No file uploaded"}), 400
 
@@ -67,30 +64,32 @@ def upload_file():
     if file.filename == '':
         return jsonify({"error": "No file selected"}), 400
 
-    if not (file.filename.endswith('.xlsx') or file.filename.endswith('.xls')):
-        return jsonify({"error": "Please upload a valid Excel file (.xlsx or .xls)"}), 400
+    fname_lower = file.filename.lower()
+    if not (fname_lower.endswith('.xlsx') or fname_lower.endswith('.xls') or fname_lower.endswith('.xlsm')):
+        return jsonify({"error": "Please upload a valid Excel file (.xlsx, .xls, or .xlsm)"}), 400
 
-    save_path = os.path.join(UPLOAD_DIR, file.filename)
+    safe_fname = "".join(c for c in file.filename if c.isalnum() or c in (" ", "_", ".", "-")).strip()
+    if not safe_fname:
+        safe_fname = "uploaded_invoice.xlsx"
+
+    save_path = os.path.join(UPLOAD_DIR, safe_fname)
     file.save(save_path)
 
     try:
         raw_df = pd.read_excel(save_path, dtype=str)
-        first_col_vals = [str(x).strip() for x in raw_df.iloc[:, 0].dropna()]
-        if "Invoice No" in first_col_vals or "Buyer Name" in first_col_vals:
-            header_col = raw_df.columns[0]
-            raw_df = raw_df.dropna(subset=[header_col])
-            raw_df[header_col] = raw_df[header_col].astype(str).str.strip()
-            df = raw_df.set_index(header_col).T.reset_index(drop=True)
-        else:
-            df = raw_df
+        cleaned_df, suggestions, errors = generate_invoices.smart_preprocess_dataframe(raw_df)
+        
+        if errors:
+            return jsonify({"error": "<br>".join(errors), "suggestions": suggestions}), 400
 
-        data = df.fillna("").to_dict(orient="records")
-        columns = list(df.columns)
+        data = cleaned_df.fillna("").to_dict(orient="records")
+        columns = list(cleaned_df.columns)
         return jsonify({
             "columns": columns,
             "data": data,
-            "filename": file.filename,
-            "filepath": save_path
+            "filename": safe_fname,
+            "filepath": save_path,
+            "suggestions": suggestions
         })
     except Exception as e:
         return jsonify({"error": f"Failed to parse Excel file: {str(e)}"}), 500
@@ -106,14 +105,12 @@ def generate():
     if not data and not filepath:
         filepath = os.path.join(BASE_DIR, "sample_invoice_input.xlsx")
 
-    # If data grid was modified on screen, save to temporary Excel sheet
+    # Save active UI grid state to openpyxl sheet for rendering
     if data:
         temp_excel = os.path.join(UPLOAD_DIR, "_active_grid.xlsx")
         df = pd.DataFrame(data)
         df.to_excel(temp_excel, index=False, engine="openpyxl")
         filepath = temp_excel
-
-    template_path = os.path.join(BASE_DIR, "invoice_template.docx")
 
     try:
         logs, generated_files = generate_invoices.generate_invoices(filepath, OUTPUT_DIR)
@@ -167,11 +164,10 @@ def open_browser():
 
 if __name__ == '__main__':
     print("\n=======================================================")
-    print("  EXCEL TO PDF INVOICE GENERATOR  ")
-    print("  Automated Excel-to-PDF Professional Invoice Creator By Soubhik  ")
+    print("  EXCEL TO PDF INVOICE GENERATOR (SMART & MOBILE READY)  ")
+    print("  Automated Excel-to-PDF Professional Invoice Creator  ")
     print("  Opening browser at http://127.0.0.1:5000 ...  ")
     print("=======================================================\n")
     
-    # Auto-open browser 1.2s after starting
     threading.Timer(1.2, open_browser).start()
-    app.run(host='127.0.0.1', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=False)

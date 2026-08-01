@@ -1,7 +1,11 @@
 # Generated outputs
 output/
+uploads/
 _temp_docx/
 *.pdf
+
+# Binaries
+cloudflared
 
 # Python
 __pycache__/

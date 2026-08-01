@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EXCEL TO PDF INVOICE GENERATOR (SMART & MOBILE)</title>
+    <title>EXCEL TO PDF INVOICE GENERATOR (SMART & DIRECT ENTRY)</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -143,7 +143,7 @@
             gap: 10px;
         }
 
-        /* File Dropzone */
+        /* File Dropzone & Option Stack */
         .dropzone-container {
             display: flex;
             gap: 16px;
@@ -157,7 +157,7 @@
             border: 2px dashed var(--primary);
             background-color: rgba(59, 130, 246, 0.05);
             border-radius: var(--radius-md);
-            padding: 30px 16px;
+            padding: 24px 16px;
             text-align: center;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -196,26 +196,45 @@
             padding: 0 4px;
         }
 
+        .action-buttons-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            justify-content: center;
+            min-width: 220px;
+        }
+
         .btn-sample {
             background-color: var(--bg-hover);
             color: var(--text-main);
             border: 1px solid var(--border-color);
-            padding: 14px 20px;
+            padding: 12px 18px;
             border-radius: var(--radius-md);
             font-weight: 600;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            min-height: 48px;
+            min-height: 44px;
         }
 
         .btn-sample:hover {
             background-color: #475569;
             border-color: #64748B;
+        }
+
+        .btn-create-new {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(59, 130, 246, 0.2));
+            color: #C084FC;
+            border: 1px solid rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-create-new:hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(59, 130, 246, 0.4));
+            color: #FFFFFF;
         }
 
         /* Smart Suggestions Banner */
@@ -253,7 +272,49 @@
             gap: 8px;
         }
 
-        /* Buttons */
+        /* Grid Action Buttons */
+        .btn-action-primary {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #34D399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 40px;
+        }
+
+        .btn-action-primary:hover {
+            background-color: var(--accent);
+            color: #0F172A;
+        }
+
+        .btn-action-secondary {
+            background-color: rgba(59, 130, 246, 0.15);
+            color: #60A5FA;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-height: 40px;
+        }
+
+        .btn-action-secondary:hover {
+            background-color: var(--primary);
+            color: #FFFFFF;
+        }
+
         .btn-danger-outline {
             background-color: rgba(239, 68, 68, 0.1);
             color: #F87171;
@@ -512,8 +573,11 @@
             .dropzone-container {
                 flex-direction: column;
             }
+            .action-buttons-stack {
+                width: 100%;
+            }
             .dropzone {
-                padding: 24px 14px;
+                padding: 20px 14px;
             }
             .or-divider {
                 padding: 4px 0;
@@ -539,15 +603,15 @@
             <div class="brand-icon">⚡</div>
             <div>
                 <h1 class="brand-title">EXCEL TO PDF INVOICE GENERATOR</h1>
-                <p class="brand-subtitle">Smart Auto-Mapping • Live Forex Rates • Mobile Ready</p>
+                <p class="brand-subtitle">Excel Upload • Direct Data Entry • Forex Rates • Mobile Ready</p>
             </div>
         </div>
         <div class="badge-status">Smart Engine Ready</div>
     </header>
 
-    <!-- Step 1: Upload or Load Data -->
+    <!-- Step 1: Upload or Direct Data Entry -->
     <div class="card">
-        <h2 class="card-title">📁 1. Select Invoice Data</h2>
+        <h2 class="card-title">📁 1. Select Excel File OR Create Direct Data Entry</h2>
         <div class="dropzone-container" style="margin-top: 14px;">
             <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
                 <div class="dropzone-icon">📊</div>
@@ -556,13 +620,18 @@
                 <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileSelect(event)">
             </div>
             <div class="or-divider">OR</div>
-            <button class="btn-sample" onclick="loadSampleData()">
-                ⚡ Load Sample Data
-            </button>
+            <div class="action-buttons-stack">
+                <button class="btn-sample btn-create-new" onclick="createNewBlankInvoice()">
+                    ✨ ➕ Direct Entry (New Invoice)
+                </button>
+                <button class="btn-sample" onclick="loadSampleData()">
+                    ⚡ Load Sample Data
+                </button>
+            </div>
         </div>
         <div class="file-info-bar" id="fileInfoBar">
-            <span id="fileNameText">Selected: sample_invoice_input.xlsx</span>
-            <span>✓ Preprocessed</span>
+            <span id="fileNameText">Selected: Direct Data Entry</span>
+            <span>✓ Active Grid</span>
         </div>
     </div>
 
@@ -577,10 +646,18 @@
     <!-- Step 2: Interactive Spreadsheet Grid -->
     <div class="card" id="editorCard" style="display: none;">
         <div class="card-header-flex">
-            <h2 class="card-title">✏️ 2. Review & Edit Invoice Data</h2>
-            <button class="btn-danger-outline" onclick="clearAllData()">
-                🗑️ Clear All Data
-            </button>
+            <h2 class="card-title">✏️ 2. Review & Edit Invoice Data Grid</h2>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button class="btn-action-primary" onclick="addNewRow()">
+                    ➕ Add Row
+                </button>
+                <button class="btn-action-secondary" onclick="exportToExcel()">
+                    📥 Export Excel (.xlsx)
+                </button>
+                <button class="btn-danger-outline" onclick="clearAllData()">
+                    🗑️ Clear All
+                </button>
+            </div>
         </div>
         <div class="table-responsive">
             <table id="dataTable">
@@ -626,6 +703,11 @@
         }
     });
 
+    // Check for saved local draft on page load
+    window.addEventListener('DOMContentLoaded', () => {
+        loadLocalDraft();
+    });
+
     function handleFileSelect(event) {
         if (event.target.files.length > 0) {
             const selectedFile = event.target.files[0];
@@ -656,6 +738,7 @@
             showFileLoaded(data.filename);
             renderSuggestions(data.suggestions);
             renderTable();
+            saveLocalDraft();
         })
         .catch(err => {
             dropText.innerText = origText;
@@ -677,7 +760,129 @@
             showFileLoaded("sample_invoice_input.xlsx (Sample)");
             renderSuggestions(data.suggestions);
             renderTable();
+            saveLocalDraft();
         });
+    }
+
+    function createNewBlankInvoice() {
+        const today = new Date().toISOString().split('T')[0];
+        currentColumns = [
+            "Invoice No", "Invoice Date", "Buyer Name", "Buyer Address Line1",
+            "Buyer Address Line2", "Country", "Particulars", "Period Description",
+            "HSN/SAC", "Amount", "Currency", "LUT Bond No", "LUT From", "LUT To",
+            "Exchange Rate", "PO Number"
+        ];
+        currentData = [{
+            "Invoice No": "INV-001",
+            "Invoice Date": today,
+            "Buyer Name": "Acme Global Solutions",
+            "Buyer Address Line1": "100 Innovation Way",
+            "Buyer Address Line2": "Suite 500, New York, NY",
+            "Country": "USA",
+            "Particulars": "Software Consulting Services",
+            "Period Description": "Current Billing Cycle",
+            "HSN/SAC": "998313",
+            "Amount": "1500",
+            "Currency": "USD",
+            "LUT Bond No": "AD190324000123",
+            "LUT From": today,
+            "LUT To": "2027-03-31",
+            "Exchange Rate": "",
+            "PO Number": "PO-889900"
+        }];
+        currentFilePath = "";
+        showFileLoaded("Direct Data Entry (New Grid Created)");
+        renderSuggestions([
+            "✨ Direct Data Entry Mode Initialized! You can type directly into the spreadsheet below.",
+            "💡 Click '+ Add Row' to add more line items or invoices to this sheet.",
+            "🌐 Forex rates will be auto-fetched for non-INR currencies when you generate PDFs."
+        ]);
+        renderTable();
+        saveLocalDraft();
+    }
+
+    function addNewRow() {
+        if (!currentColumns || currentColumns.length === 0) {
+            createNewBlankInvoice();
+            return;
+        }
+        const newRow = {};
+        const lastRow = currentData.length > 0 ? currentData[currentData.length - 1] : {};
+        const today = new Date().toISOString().split('T')[0];
+        
+        currentColumns.forEach(col => {
+            if (col === "Invoice No") newRow[col] = lastRow["Invoice No"] || "INV-001";
+            else if (col === "Invoice Date") newRow[col] = lastRow["Invoice Date"] || today;
+            else if (col === "Buyer Name") newRow[col] = lastRow["Buyer Name"] || "";
+            else if (col === "Buyer Address Line1") newRow[col] = lastRow["Buyer Address Line1"] || "";
+            else if (col === "Buyer Address Line2") newRow[col] = lastRow["Buyer Address Line2"] || "";
+            else if (col === "Country") newRow[col] = lastRow["Country"] || "";
+            else if (col === "Currency") newRow[col] = lastRow["Currency"] || "USD";
+            else if (col === "LUT Bond No") newRow[col] = lastRow["LUT Bond No"] || "";
+            else if (col === "LUT From") newRow[col] = lastRow["LUT From"] || "";
+            else if (col === "LUT To") newRow[col] = lastRow["LUT To"] || "";
+            else if (col === "HSN/SAC") newRow[col] = "998313";
+            else newRow[col] = "";
+        });
+
+        currentData.push(newRow);
+        renderTable();
+        saveLocalDraft();
+    }
+
+    function exportToExcel() {
+        if (!currentData || currentData.length === 0) {
+            alert("No data available to export.");
+            return;
+        }
+
+        fetch('/api/export-excel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data: currentData })
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Failed to generate Excel file");
+            return res.blob();
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Invoice_Data_Export.xlsx';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(err => alert("Export failed: " + err));
+    }
+
+    function saveLocalDraft() {
+        try {
+            if (currentData && currentData.length > 0) {
+                localStorage.setItem("invoice_draft_data", JSON.stringify(currentData));
+                localStorage.setItem("invoice_draft_columns", JSON.stringify(currentColumns));
+            }
+        } catch (e) {}
+    }
+
+    function loadLocalDraft() {
+        try {
+            const savedData = localStorage.getItem("invoice_draft_data");
+            const savedCols = localStorage.getItem("invoice_draft_columns");
+            if (savedData && savedCols) {
+                const parsedData = JSON.parse(savedData);
+                const parsedCols = JSON.parse(savedCols);
+                if (parsedData && parsedData.length > 0) {
+                    currentData = parsedData;
+                    currentColumns = parsedCols;
+                    showFileLoaded("Restored Active Draft Grid");
+                    renderSuggestions(["💾 Restored your active data grid from browser memory."]);
+                    renderTable();
+                }
+            }
+        } catch (e) {}
     }
 
     function renderSuggestions(suggestions) {
@@ -699,7 +904,7 @@
     }
 
     function showFileLoaded(name) {
-        document.getElementById('fileNameText').innerText = "Loaded: " + name;
+        document.getElementById('fileNameText').innerText = "Mode/File: " + name;
         document.getElementById('fileInfoBar').style.display = "flex";
     }
 
@@ -708,6 +913,8 @@
             currentData = [];
             currentColumns = [];
             currentFilePath = "";
+            localStorage.removeItem("invoice_draft_data");
+            localStorage.removeItem("invoice_draft_columns");
             document.getElementById('editorCard').style.display = "none";
             document.getElementById('fileInfoBar').style.display = "none";
             document.getElementById('suggestionsCard').style.display = "none";
@@ -720,6 +927,7 @@
             currentColumns = currentColumns.filter(c => c !== colName);
             currentData.forEach(row => { delete row[colName]; });
             renderTable();
+            saveLocalDraft();
         }
     }
 
@@ -727,6 +935,7 @@
         if (confirm(`Delete Row ${rIdx + 1}?`)) {
             currentData.splice(rIdx, 1);
             renderTable();
+            saveLocalDraft();
         }
     }
 
@@ -765,7 +974,10 @@
                 const td = document.createElement('td');
                 const inp = document.createElement('input');
                 inp.value = row[col] !== undefined ? row[col] : '';
-                inp.onchange = (e) => { currentData[rIdx][col] = e.target.value; };
+                inp.onchange = (e) => { 
+                    currentData[rIdx][col] = e.target.value; 
+                    saveLocalDraft();
+                };
                 td.appendChild(inp);
                 tr.appendChild(td);
             });

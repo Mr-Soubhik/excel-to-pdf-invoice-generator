@@ -1,8 +1,8 @@
-# 📑 EXCEL TO PDF INVOICE GENERATOR (SMART & MOBILE EDITION)
+# 📑 EXCEL TO PDF INVOICE GENERATOR (DUAL MODE: UPLOAD & DIRECT ENTRY)
 
 > **Automated Excel-to-PDF Professional Invoice Creator By Soubhik**
 
-A zero-commandline, non-tech friendly Web Application to generate professional PDF invoices from Excel spreadsheets with Smart Auto-Mapping, Live Forex Rates, 1-Page Layout Optimizer, and Mobile responsiveness.
+A zero-commandline, non-tech friendly Web Application to generate professional PDF invoices via **Excel Upload** OR **Direct In-Browser Data Entry** with Smart Auto-Mapping, Live Forex Rates, 1-Page Layout Optimizer, and Mobile responsiveness.
 
 ---
 
@@ -30,14 +30,17 @@ This will automatically start the server and print a free Cloudflare HTTPS link 
 
 ---
 
-## ✨ Smart & Mobile Features
+## ✨ Features
 
-1. **🤖 Smart Fuzzy Column Auto-Mapping**: Automatically recognizes column variations (`Invoice #`, `Bill To`, `Client`, `Date`, `Total`) and maps them to standard invoice fields.
-2. **🌐 Live Forex Exchange Rates**: Auto-fetches real-time exchange rates (USD, EUR, GBP, AUD, CAD, SGD, AED, JPY to INR) via live API for foreign currency invoices.
-3. **💡 Smart AI Suggestions Banner**: Displays actionable pre-flight feedback, auto-fixes, and warnings before generating PDFs.
-4. **📱 Fully Mobile Responsive**: Re-designed for smartphones and tablets with touch-friendly controls and responsive data grid.
-5. **📦 1-Page Layout & Space Saver**: Dynamically scales spacing so invoices fit on 1 clean page, and automatically cleans up temporary files to save server disk space.
-6. **1-Click Demo & Downloads**: Single-click demo loading, in-browser spreadsheet editor, and 1-click batch ZIP download.
+1. **📁 Excel Upload Mode**: Drag & drop any `.xlsx` invoice file into the browser.
+2. **✨ ➕ Direct Data Entry Mode**: Click **"Direct Entry (New Invoice)"** to build an invoice grid from scratch in your browser without needing Excel installed!
+3. **➕ Add Row & 📥 Export Excel**: Add new rows on the fly, edit fields in real-time, and export your manual data back into a clean `.xlsx` file.
+4. **💾 Browser Draft Memory (`localStorage`)**: Saves your typed grid state automatically so your work is never lost on refresh.
+5. **🤖 Smart Fuzzy Column Auto-Mapping**: Automatically recognizes column variations (`Invoice #`, `Bill To`, `Client`, `Date`, `Total`).
+6. **🌐 Live Forex Exchange Rates**: Auto-fetches real-time exchange rates (USD, EUR, GBP, AUD, CAD, SGD, AED, JPY to INR) via live API.
+7. **💡 Smart AI Suggestions Banner**: Displays pre-flight feedback and warnings before generating PDFs.
+8. **📱 Fully Mobile Responsive**: Designed for smartphones and tablets with touch-friendly controls.
+9. **📦 1-Page Layout & Space Saver**: Auto-fits multi-item invoices to 1 clean page.
 
 ---
 

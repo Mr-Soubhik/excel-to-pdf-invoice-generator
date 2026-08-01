@@ -2,7 +2,7 @@
 Invoice Generator - Web Application (Smart Edition)
 --------------------------------------------------
 A user-friendly, browser-based Web UI for generating PDF invoices.
-Includes Smart Auto-Mapping, Forex Live Rates, and Mobile Optimization.
+Includes Direct Data Entry Grid, Smart Auto-Mapping, Forex Live Rates, and Mobile Optimization.
 
 Run with:
     python app.py
@@ -132,6 +132,30 @@ def generate():
         })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/export-excel', methods=['POST'])
+def export_excel():
+    """Converts active grid data into a downloadable Excel spreadsheet."""
+    req_json = request.get_json(silent=True) or {}
+    data = req_json.get('data', [])
+    if not data:
+        return jsonify({"error": "No data to export"}), 400
+
+    try:
+        df = pd.DataFrame(data)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Invoices')
+        output.seek(0)
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='Invoice_Data_Export.xlsx'
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/download/<filename>')

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EXCEL TO PDF INVOICE GENERATOR (SMART & DIRECT ENTRY)</title>
+    <title>EXCEL TO PDF INVOICE GENERATOR (AUTO-SPACED GRID)</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -370,10 +370,10 @@
             flex-wrap: wrap;
         }
 
-        /* Mobile Friendly Interactive Spreadsheet Table */
+        /* Auto-Spaced Interactive Spreadsheet Table */
         .table-responsive {
             overflow-x: auto;
-            max-height: 420px;
+            max-height: 450px;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             margin-top: 10px;
@@ -382,20 +382,22 @@
 
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0;
             font-size: 13px;
             text-align: left;
-            min-width: 600px;
+            min-width: 100%;
+            table-layout: auto;
         }
 
         th {
             background-color: #0F172A;
             color: var(--text-muted);
             font-weight: 700;
-            padding: 12px 14px;
+            padding: 12px 16px;
             position: sticky;
             top: 0;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 2px solid var(--border-color);
             white-space: nowrap;
             z-index: 2;
         }
@@ -407,21 +409,35 @@
         }
 
         td input {
-            width: 100%;
-            min-width: 110px;
             background: transparent;
-            border: 1px solid transparent;
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-main);
-            padding: 8px 10px;
+            padding: 8px 12px;
             border-radius: 6px;
             font-size: 13px;
             transition: all 0.15s ease;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        /* Auto-Spaced Column Dimensions */
+        td input.col-wide {
+            min-width: 250px;
+        }
+
+        td input.col-medium {
+            min-width: 160px;
+        }
+
+        td input.col-small {
+            min-width: 100px;
         }
 
         td input:focus {
             background-color: #0F172A;
             border-color: var(--primary);
             outline: none;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
         }
 
         /* Generate Primary Button */
@@ -603,7 +619,7 @@
             <div class="brand-icon">⚡</div>
             <div>
                 <h1 class="brand-title">EXCEL TO PDF INVOICE GENERATOR</h1>
-                <p class="brand-subtitle">Excel Upload • Direct Data Entry • Forex Rates • Mobile Ready</p>
+                <p class="brand-subtitle">Excel Upload • Direct Data Entry • Auto-Spaced Grid • Mobile Ready</p>
             </div>
         </div>
         <div class="badge-status">Smart Engine Ready</div>
@@ -643,7 +659,7 @@
         <div class="suggestions-list" id="suggestionsList"></div>
     </div>
 
-    <!-- Step 2: Interactive Spreadsheet Grid -->
+    <!-- Step 2: Interactive Auto-Spaced Spreadsheet Grid -->
     <div class="card" id="editorCard" style="display: none;">
         <div class="card-header-flex">
             <h2 class="card-title">✏️ 2. Review & Edit Invoice Data Grid</h2>
@@ -703,7 +719,6 @@
         }
     });
 
-    // Check for saved local draft on page load
     window.addEventListener('DOMContentLoaded', () => {
         loadLocalDraft();
     });
@@ -793,7 +808,7 @@
         currentFilePath = "";
         showFileLoaded("Direct Data Entry (New Grid Created)");
         renderSuggestions([
-            "✨ Direct Data Entry Mode Initialized! You can type directly into the spreadsheet below.",
+            "✨ Direct Data Entry Mode Initialized! Type directly into the auto-spaced spreadsheet below.",
             "💡 Click '+ Add Row' to add more line items or invoices to this sheet.",
             "🌐 Forex rates will be auto-fetched for non-INR currencies when you generate PDFs."
         ]);
@@ -849,7 +864,7 @@
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'Invoice_Data_Export.xlsx';
+            a.download = 'Standard_Invoice_Input.xlsx';
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -883,6 +898,14 @@
                 }
             }
         } catch (e) {}
+    }
+
+    function getColumnClass(colName) {
+        const wideCols = ["Particulars", "Buyer Address Line1", "Buyer Address Line2", "Period Description", "LUT Bond No", "Project/Order Number"];
+        const medCols = ["Buyer Name", "Invoice No", "Invoice Date", "PO Number", "LUT From", "LUT To", "Project Cost", "Payment Terms"];
+        if (wideCols.includes(colName)) return "col-wide";
+        if (medCols.includes(colName)) return "col-medium";
+        return "col-small";
     }
 
     function renderSuggestions(suggestions) {
@@ -973,6 +996,7 @@
             currentColumns.forEach(col => {
                 const td = document.createElement('td');
                 const inp = document.createElement('input');
+                inp.className = getColumnClass(col);
                 inp.value = row[col] !== undefined ? row[col] : '';
                 inp.onchange = (e) => { 
                     currentData[rIdx][col] = e.target.value; 

@@ -136,7 +136,7 @@ def generate():
 
 @app.route('/api/export-excel', methods=['POST'])
 def export_excel():
-    """Converts active grid data into a downloadable Excel spreadsheet."""
+    """Converts active grid data into a downloadable Excel spreadsheet with standardized columns & auto-spacing."""
     req_json = request.get_json(silent=True) or {}
     data = req_json.get('data', [])
     if not data:
@@ -144,15 +144,40 @@ def export_excel():
 
     try:
         df = pd.DataFrame(data)
+        
+        # Standard upload column order
+        standard_cols = [
+            "Invoice No", "Invoice Date", "Buyer Name", "Buyer Address Line1",
+            "Buyer Address Line2", "Country", "Particulars", "Period Description",
+            "HSN/SAC", "Amount", "Currency", "LUT Bond No", "LUT From", "LUT To",
+            "Exchange Rate", "PO Number", "PO Date", "Project/Order Number",
+            "Payment Terms", "Project Cost"
+        ]
+        
+        ordered = [c for c in standard_cols if c in df.columns] + [c for c in df.columns if c not in standard_cols]
+        df = df[ordered]
+
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Invoices')
+            df.to_excel(writer, index=False, sheet_name='Invoice_Data')
+            ws = writer.sheets['Invoice_Data']
+            
+            # Auto-space column widths so all text/data is visible without cutoffs
+            for col in ws.columns:
+                max_len = 0
+                col_letter = col[0].column_letter
+                for cell in col:
+                    val = str(cell.value or '')
+                    if len(val) > max_len:
+                        max_len = len(val)
+                ws.column_dimensions[col_letter].width = max(max_len + 4, 14)
+
         output.seek(0)
         return send_file(
             output,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             as_attachment=True,
-            download_name='Invoice_Data_Export.xlsx'
+            download_name='Standard_Invoice_Input.xlsx'
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 500

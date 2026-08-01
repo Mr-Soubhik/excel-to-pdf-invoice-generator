@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>EXCEL TO PDF INVOICE GENERATOR (AUTO-SPACED GRID)</title>
+    <title>EXCEL TO PDF INVOICE GENERATOR (VERTICAL ATTRIBUTE SHEET)</title>
     <!-- Google Fonts Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -373,7 +373,7 @@
         /* Auto-Spaced Interactive Spreadsheet Table */
         .table-responsive {
             overflow-x: auto;
-            max-height: 450px;
+            max-height: 520px;
             border: 1px solid var(--border-color);
             border-radius: var(--radius-md);
             margin-top: 10px;
@@ -421,16 +421,18 @@
         }
 
         /* Auto-Spaced Column Dimensions */
-        td input.col-wide {
-            min-width: 250px;
+        td.attr-cell {
+            font-weight: 700;
+            color: #93C5FD;
+            white-space: nowrap;
+            padding: 10px 14px;
+            background-color: #1E293B;
+            border-right: 1px solid var(--border-color);
+            min-width: 180px;
         }
 
-        td input.col-medium {
-            min-width: 160px;
-        }
-
-        td input.col-small {
-            min-width: 100px;
+        td input.invoice-val-input {
+            min-width: 220px;
         }
 
         td input:focus {
@@ -619,7 +621,7 @@
             <div class="brand-icon">⚡</div>
             <div>
                 <h1 class="brand-title">EXCEL TO PDF INVOICE GENERATOR</h1>
-                <p class="brand-subtitle">Excel Upload • Direct Data Entry • Auto-Spaced Grid • Mobile Ready</p>
+                <p class="brand-subtitle">Vertical Attribute Excel • Direct Data Entry • Forex Rates • Mobile Ready</p>
             </div>
         </div>
         <div class="badge-status">Smart Engine Ready</div>
@@ -632,13 +634,13 @@
             <div class="dropzone" id="dropzone" onclick="document.getElementById('fileInput').click()">
                 <div class="dropzone-icon">📊</div>
                 <div class="dropzone-text">Tap or Drag Excel File (.xlsx)</div>
-                <div class="dropzone-hint">Auto-maps headers & fetches Forex live rates</div>
+                <div class="dropzone-hint">Supports Vertical Attribute format (sample_invoice_input.xlsx)</div>
                 <input type="file" id="fileInput" accept=".xlsx, .xls" style="display: none;" onchange="handleFileSelect(event)">
             </div>
             <div class="or-divider">OR</div>
             <div class="action-buttons-stack">
                 <button class="btn-sample btn-create-new" onclick="createNewBlankInvoice()">
-                    ✨ ➕ Direct Entry (New Invoice)
+                    ✨ ➕ Direct Entry (New Sheet)
                 </button>
                 <button class="btn-sample" onclick="loadSampleData()">
                     ⚡ Load Sample Data
@@ -659,13 +661,13 @@
         <div class="suggestions-list" id="suggestionsList"></div>
     </div>
 
-    <!-- Step 2: Interactive Auto-Spaced Spreadsheet Grid -->
+    <!-- Step 2: Interactive Vertical Attribute Spreadsheet Grid -->
     <div class="card" id="editorCard" style="display: none;">
         <div class="card-header-flex">
             <h2 class="card-title">✏️ 2. Review & Edit Invoice Data Grid</h2>
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button class="btn-action-primary" onclick="addNewRow()">
-                    ➕ Add Row
+                <button class="btn-action-primary" id="btnAddItem" onclick="addNewInvoiceColumn()">
+                    ➕ Add Invoice Column
                 </button>
                 <button class="btn-action-secondary" onclick="exportToExcel()">
                     📥 Export Excel (.xlsx)
@@ -781,66 +783,63 @@
 
     function createNewBlankInvoice() {
         const today = new Date().toISOString().split('T')[0];
-        currentColumns = [
+        const attributes = [
             "Invoice No", "Invoice Date", "Buyer Name", "Buyer Address Line1",
             "Buyer Address Line2", "Country", "Particulars", "Period Description",
             "HSN/SAC", "Amount", "Currency", "LUT Bond No", "LUT From", "LUT To",
-            "Exchange Rate", "PO Number"
+            "Exchange Rate", "PO Number", "PO Date", "Project/Order Number",
+            "Payment Terms", "Project Cost"
         ];
-        currentData = [{
-            "Invoice No": "INV-001",
-            "Invoice Date": today,
-            "Buyer Name": "Acme Global Solutions",
-            "Buyer Address Line1": "100 Innovation Way",
-            "Buyer Address Line2": "Suite 500, New York, NY",
-            "Country": "USA",
-            "Particulars": "Software Consulting Services",
-            "Period Description": "Current Billing Cycle",
-            "HSN/SAC": "998313",
-            "Amount": "1500",
-            "Currency": "USD",
-            "LUT Bond No": "AD190324000123",
-            "LUT From": today,
-            "LUT To": "2027-03-31",
-            "Exchange Rate": "",
-            "PO Number": "PO-889900"
-        }];
+        
+        currentColumns = ["Attribute", "Invoice 1"];
+        currentData = attributes.map(attr => {
+            let val = "";
+            if (attr === "Invoice No") val = "WTEXI/26-27/077";
+            else if (attr === "Invoice Date") val = today;
+            else if (attr === "Buyer Name") val = "ACME GLOBAL CORP";
+            else if (attr === "Buyer Address Line1") val = "100 Innovation Way";
+            else if (attr === "Buyer Address Line2") val = "Suite 500, New York, NY";
+            else if (attr === "Country") val = "USA";
+            else if (attr === "Particulars") val = "Software Development & IT Consulting";
+            else if (attr === "Period Description") val = "(August 2026)";
+            else if (attr === "HSN/SAC") val = "998313";
+            else if (attr === "Amount") val = "5000";
+            else if (attr === "Currency") val = "USD";
+            else if (attr === "LUT Bond No") val = "AD190324000123";
+            else if (attr === "LUT From") val = today;
+            else if (attr === "LUT To") val = "2027-03-31";
+            return { "Attribute": attr, "Invoice 1": val };
+        });
+
         currentFilePath = "";
-        showFileLoaded("Direct Data Entry (New Grid Created)");
+        showFileLoaded("Direct Entry (Vertical Sheet matching sample_invoice_input.xlsx)");
         renderSuggestions([
-            "✨ Direct Data Entry Mode Initialized! Type directly into the auto-spaced spreadsheet below.",
-            "💡 Click '+ Add Row' to add more line items or invoices to this sheet.",
-            "🌐 Forex rates will be auto-fetched for non-INR currencies when you generate PDFs."
+            "✨ Vertical Attribute Format Initialized (matching sample_invoice_input.xlsx).",
+            "📐 Column A lists attributes (Invoice No, Buyer Name, Amount, etc.).",
+            "💡 Click '+ Add Invoice Column' to add Invoice 2, Invoice 3, etc."
         ]);
         renderTable();
         saveLocalDraft();
     }
 
-    function addNewRow() {
-        if (!currentColumns || currentColumns.length === 0) {
+    function addNewInvoiceColumn() {
+        if (!currentColumns || currentColumns.length === 0 || currentColumns[0] !== "Attribute") {
             createNewBlankInvoice();
             return;
         }
-        const newRow = {};
-        const lastRow = currentData.length > 0 ? currentData[currentData.length - 1] : {};
+        const newColName = `Invoice ${currentColumns.length}`;
+        currentColumns.push(newColName);
         const today = new Date().toISOString().split('T')[0];
-        
-        currentColumns.forEach(col => {
-            if (col === "Invoice No") newRow[col] = lastRow["Invoice No"] || "INV-001";
-            else if (col === "Invoice Date") newRow[col] = lastRow["Invoice Date"] || today;
-            else if (col === "Buyer Name") newRow[col] = lastRow["Buyer Name"] || "";
-            else if (col === "Buyer Address Line1") newRow[col] = lastRow["Buyer Address Line1"] || "";
-            else if (col === "Buyer Address Line2") newRow[col] = lastRow["Buyer Address Line2"] || "";
-            else if (col === "Country") newRow[col] = lastRow["Country"] || "";
-            else if (col === "Currency") newRow[col] = lastRow["Currency"] || "USD";
-            else if (col === "LUT Bond No") newRow[col] = lastRow["LUT Bond No"] || "";
-            else if (col === "LUT From") newRow[col] = lastRow["LUT From"] || "";
-            else if (col === "LUT To") newRow[col] = lastRow["LUT To"] || "";
-            else if (col === "HSN/SAC") newRow[col] = "998313";
-            else newRow[col] = "";
+
+        currentData.forEach(row => {
+            const attr = row["Attribute"];
+            let val = "";
+            if (attr === "Invoice Date") val = today;
+            else if (attr === "Currency") val = "USD";
+            else if (attr === "HSN/SAC") val = "998313";
+            row[newColName] = val;
         });
 
-        currentData.push(newRow);
         renderTable();
         saveLocalDraft();
     }
@@ -864,7 +863,7 @@
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'Standard_Invoice_Input.xlsx';
+            a.download = 'sample_invoice_input.xlsx';
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -893,19 +892,11 @@
                     currentData = parsedData;
                     currentColumns = parsedCols;
                     showFileLoaded("Restored Active Draft Grid");
-                    renderSuggestions(["💾 Restored your active data grid from browser memory."]);
+                    renderSuggestions(["💾 Restored your active vertical attribute sheet from browser memory."]);
                     renderTable();
                 }
             }
         } catch (e) {}
-    }
-
-    function getColumnClass(colName) {
-        const wideCols = ["Particulars", "Buyer Address Line1", "Buyer Address Line2", "Period Description", "LUT Bond No", "Project/Order Number"];
-        const medCols = ["Buyer Name", "Invoice No", "Invoice Date", "PO Number", "LUT From", "LUT To", "Project Cost", "Payment Terms"];
-        if (wideCols.includes(colName)) return "col-wide";
-        if (medCols.includes(colName)) return "col-medium";
-        return "col-small";
     }
 
     function renderSuggestions(suggestions) {
@@ -975,6 +966,13 @@
 
         const isVertical = (currentColumns[0] === 'Attribute');
 
+        // Update button text depending on format
+        const btnAdd = document.getElementById('btnAddItem');
+        if (btnAdd) {
+            btnAdd.innerText = isVertical ? "➕ Add Invoice Column" : "➕ Add Row";
+            btnAdd.onclick = isVertical ? addNewInvoiceColumn : addNewInvoiceColumn;
+        }
+
         currentColumns.forEach((col, cIdx) => {
             const th = document.createElement('th');
             if (isVertical && cIdx > 0) {
@@ -993,16 +991,21 @@
 
         currentData.forEach((row, rIdx) => {
             const tr = document.createElement('tr');
-            currentColumns.forEach(col => {
+            currentColumns.forEach((col, cIdx) => {
                 const td = document.createElement('td');
-                const inp = document.createElement('input');
-                inp.className = getColumnClass(col);
-                inp.value = row[col] !== undefined ? row[col] : '';
-                inp.onchange = (e) => { 
-                    currentData[rIdx][col] = e.target.value; 
-                    saveLocalDraft();
-                };
-                td.appendChild(inp);
+                if (isVertical && cIdx === 0) {
+                    td.className = 'attr-cell';
+                    td.innerText = row[col] !== undefined ? row[col] : '';
+                } else {
+                    const inp = document.createElement('input');
+                    inp.className = 'invoice-val-input';
+                    inp.value = row[col] !== undefined ? row[col] : '';
+                    inp.onchange = (e) => { 
+                        currentData[rIdx][col] = e.target.value; 
+                        saveLocalDraft();
+                    };
+                    td.appendChild(inp);
+                }
                 tr.appendChild(td);
             });
 

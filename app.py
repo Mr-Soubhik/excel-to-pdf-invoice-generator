@@ -2,7 +2,8 @@
 Invoice Generator - Web Application (Smart Edition)
 --------------------------------------------------
 A user-friendly, browser-based Web UI for generating PDF invoices.
-Includes Direct Data Entry Grid, Smart Auto-Mapping, Forex Live Rates, and Mobile Optimization.
+Supports Vertical Attribute Spreadsheets (matching sample_invoice_input.xlsx),
+Smart Auto-Mapping, Forex Live Rates, and Mobile Optimization.
 
 Run with:
     python app.py
@@ -41,6 +42,22 @@ def get_sample_data():
 
     try:
         raw_df = pd.read_excel(sample_path, dtype=str)
+        # Keep original format as vertical if Attribute column exists
+        if raw_df.columns[0] == "Attribute":
+            data = raw_df.fillna("").to_dict(orient="records")
+            columns = list(raw_df.columns)
+            suggestions = [
+                "✨ Loaded Vertical Attribute Format (matching sample_invoice_input.xlsx).",
+                "📐 Column A lists attributes (Invoice No, Buyer Name, Amount, etc.).",
+                "🌐 Forex rates will be auto-fetched for non-INR invoices."
+            ]
+            return jsonify({
+                "columns": columns,
+                "data": data,
+                "filename": "sample_invoice_input.xlsx",
+                "suggestions": suggestions
+            })
+
         cleaned_df, suggestions, errors = generate_invoices.smart_preprocess_dataframe(raw_df)
         data = cleaned_df.fillna("").to_dict(orient="records")
         columns = list(cleaned_df.columns)
@@ -77,8 +94,24 @@ def upload_file():
 
     try:
         raw_df = pd.read_excel(save_path, dtype=str)
-        cleaned_df, suggestions, errors = generate_invoices.smart_preprocess_dataframe(raw_df)
         
+        # Check if vertical format
+        if raw_df.columns[0] == "Attribute" or "Invoice No" in [str(x).strip() for x in raw_df.iloc[:, 0].dropna()]:
+            data = raw_df.fillna("").to_dict(orient="records")
+            columns = list(raw_df.columns)
+            suggestions = [
+                "✨ Detected Vertical Attribute Excel Format (matching sample_invoice_input.xlsx).",
+                "📐 Column A lists attributes, Columns B+ represent individual invoices."
+            ]
+            return jsonify({
+                "columns": columns,
+                "data": data,
+                "filename": safe_fname,
+                "filepath": save_path,
+                "suggestions": suggestions
+            })
+
+        cleaned_df, suggestions, errors = generate_invoices.smart_preprocess_dataframe(raw_df)
         if errors:
             return jsonify({"error": "<br>".join(errors), "suggestions": suggestions}), 400
 
@@ -136,7 +169,7 @@ def generate():
 
 @app.route('/api/export-excel', methods=['POST'])
 def export_excel():
-    """Converts active grid data into a downloadable Excel spreadsheet with standardized columns & auto-spacing."""
+    """Converts active grid data into a downloadable Excel spreadsheet matching sample_invoice_input.xlsx vertical format."""
     req_json = request.get_json(silent=True) or {}
     data = req_json.get('data', [])
     if not data:
@@ -145,24 +178,36 @@ def export_excel():
     try:
         df = pd.DataFrame(data)
         
-        # Standard upload column order
-        standard_cols = [
-            "Invoice No", "Invoice Date", "Buyer Name", "Buyer Address Line1",
-            "Buyer Address Line2", "Country", "Particulars", "Period Description",
-            "HSN/SAC", "Amount", "Currency", "LUT Bond No", "LUT From", "LUT To",
-            "Exchange Rate", "PO Number", "PO Date", "Project/Order Number",
-            "Payment Terms", "Project Cost"
-        ]
-        
-        ordered = [c for c in standard_cols if c in df.columns] + [c for c in df.columns if c not in standard_cols]
-        df = df[ordered]
+        # Check if already vertical (has 'Attribute' column)
+        if df.columns[0] == "Attribute":
+            export_df = df
+        else:
+            # Transpose horizontal rows to vertical Attribute format matching sample_invoice_input.xlsx
+            standard_attrs = [
+                "Invoice No", "Invoice Date", "Buyer Name", "Buyer Address Line1",
+                "Buyer Address Line2", "Country", "Particulars", "Period Description",
+                "HSN/SAC", "Amount", "Currency", "LUT Bond No", "LUT From", "LUT To",
+                "Exchange Rate", "PO Number", "PO Date", "Project/Order Number",
+                "Payment Terms", "Project Cost"
+            ]
+            
+            vertical_data = {"Attribute": standard_attrs}
+            for idx, row in df.iterrows():
+                inv_col_name = f"Invoice {idx + 1}"
+                col_vals = []
+                for attr in standard_attrs:
+                    val = row.get(attr, "")
+                    col_vals.append("" if pd.isna(val) else str(val))
+                vertical_data[inv_col_name] = col_vals
+            
+            export_df = pd.DataFrame(vertical_data)
 
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Invoice_Data')
+            export_df.to_excel(writer, index=False, sheet_name='Invoice_Data')
             ws = writer.sheets['Invoice_Data']
             
-            # Auto-space column widths so all text/data is visible without cutoffs
+            # Auto-space column widths so all text/data is fully visible
             for col in ws.columns:
                 max_len = 0
                 col_letter = col[0].column_letter
@@ -170,14 +215,14 @@ def export_excel():
                     val = str(cell.value or '')
                     if len(val) > max_len:
                         max_len = len(val)
-                ws.column_dimensions[col_letter].width = max(max_len + 4, 14)
+                ws.column_dimensions[col_letter].width = max(max_len + 4, 18)
 
         output.seek(0)
         return send_file(
             output,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             as_attachment=True,
-            download_name='Standard_Invoice_Input.xlsx'
+            download_name='sample_invoice_input.xlsx'
         )
     except Exception as e:
         return jsonify({"error": str(e)}), 500

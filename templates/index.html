@@ -733,6 +733,27 @@
         }
     }
 
+    async function parseJsonResponse(res) {
+        const text = await res.text();
+        if (!res.ok) {
+            try {
+                const json = JSON.parse(text);
+                if (json && json.error) throw new Error(`Server Error (${res.status}): ${json.error}`);
+            } catch(e) {
+                if (e.message && e.message.startsWith('Server Error')) throw e;
+            }
+            throw new Error(`Server status ${res.status}: ${text ? text.slice(0, 300) : res.statusText}`);
+        }
+        if (!text || !text.trim()) {
+            throw new Error(`Empty response from server (Status ${res.status}). The request may have timed out or failed on the backend.`);
+        }
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error(`Invalid non-JSON response from server: ${text.slice(0, 300)}`);
+        }
+    }
+
     function uploadFile(file) {
         const dropText = document.querySelector('.dropzone-text');
         const origText = dropText.innerText;
@@ -742,7 +763,7 @@
         formData.append('file', file);
 
         fetch('/api/upload', { method: 'POST', body: formData })
-        .then(res => res.json())
+        .then(parseJsonResponse)
         .then(data => {
             dropText.innerText = origText;
             if (data.error) {
@@ -765,7 +786,7 @@
 
     function loadSampleData() {
         fetch('/api/sample-data')
-        .then(res => res.json())
+        .then(parseJsonResponse)
         .then(data => {
             if (data.error) {
                 alert('Error: ' + data.error);
@@ -1031,7 +1052,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ data: currentData, filepath: currentFilePath })
         })
-        .then(res => res.json())
+        .then(parseJsonResponse)
         .then(data => {
             btn.disabled = false;
             btn.innerHTML = '<span>🚀 Generate All PDF Invoices</span>';
@@ -1046,7 +1067,7 @@
         .catch(err => {
             btn.disabled = false;
             btn.innerHTML = '<span>🚀 Generate All PDF Invoices</span>';
-            alert('Generation request failed: ' + err);
+            alert('Generation request failed:\n' + (err.message || err));
         });
     }
 

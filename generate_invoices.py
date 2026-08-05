@@ -266,12 +266,24 @@ def safe_invoice_filename(invoice_no, buyer_name):
 
 
 def convert_docx_to_pdf(docx_path, output_dir):
-    """Uses LibreOffice headless to convert docx -> pdf."""
-    subprocess.run(
-        ["soffice", "--headless", "--convert-to", "pdf", "--outdir", output_dir, docx_path],
-        check=True,
-        capture_output=True,
-    )
+    """Uses LibreOffice headless to convert docx -> pdf with fallback and timeout."""
+    binary = shutil.which("soffice") or shutil.which("libreoffice")
+    if not binary:
+        raise RuntimeError("LibreOffice ('soffice' or 'libreoffice') is not installed or not in PATH. Please install LibreOffice to generate PDF invoices.")
+
+    try:
+        subprocess.run(
+            [binary, "--headless", "--convert-to", "pdf", "--outdir", output_dir, docx_path],
+            check=True,
+            capture_output=True,
+            timeout=30,
+        )
+    except subprocess.TimeoutExpired:
+        raise RuntimeError(f"PDF conversion timed out (exceeded 30s) for {os.path.basename(docx_path)}")
+    except subprocess.CalledProcessError as e:
+        stderr_msg = e.stderr.decode(errors='ignore') if e.stderr else str(e)
+        raise RuntimeError(f"LibreOffice conversion error: {stderr_msg}")
+
 
 
 # ---------- MAIN GENERATION LOGIC ----------
@@ -387,10 +399,13 @@ def generate_invoices(input_excel_path, output_folder):
             pdf_generated_path = os.path.join(
                 output_folder, os.path.basename(docx_out_path).replace(".docx", ".pdf")
             )
-            generated_files.append(pdf_generated_path)
-            log_lines.append(f"Generated: {os.path.basename(pdf_generated_path)}  (Total: {fmt_amount(total_amount, currency)}, {len(items)} line item(s))")
-        except subprocess.CalledProcessError as e:
-            log_lines.append(f"ERROR converting {safe_name} to PDF: {e.stderr.decode(errors='ignore')}")
+            if os.path.exists(pdf_generated_path):
+                generated_files.append(pdf_generated_path)
+                log_lines.append(f"Generated: {os.path.basename(pdf_generated_path)}  (Total: {fmt_amount(total_amount, currency)}, {len(items)} line item(s))")
+            else:
+                log_lines.append(f"ERROR: PDF file was not created for {safe_name}")
+        except Exception as e:
+            log_lines.append(f"ERROR converting {safe_name} to PDF: {str(e)}")
 
     # Cleanup temp working files to save server disk space
     shutil.rmtree(temp_dir, ignore_errors=True)

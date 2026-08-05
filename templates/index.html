@@ -789,7 +789,7 @@
         .then(parseJsonResponse)
         .then(data => {
             if (data.error) {
-                alert('Error: ' + data.error);
+                alert('Error loading sample data:\n' + data.error);
                 return;
             }
             currentData = data.data;
@@ -799,6 +799,9 @@
             renderSuggestions(data.suggestions);
             renderTable();
             saveLocalDraft();
+        })
+        .catch(err => {
+            alert('Failed to load sample data:\n' + (err.message || err));
         });
     }
 
@@ -941,6 +944,7 @@
     function showFileLoaded(name) {
         document.getElementById('fileNameText').innerText = "Mode/File: " + name;
         document.getElementById('fileInfoBar').style.display = "flex";
+        document.getElementById('editorCard').style.display = "block";
     }
 
     function clearAllData() {
